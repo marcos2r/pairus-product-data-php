@@ -158,6 +158,8 @@ A nota é transmitida automaticamente depois, e o desfecho chega por webhook (`n
 `nfe.contingencia_rejeitada`, `nfe.substituida_cancelada`, `nfe.substituida_inutilizada`,
 `nfe.regularizacao_manual`). Para recusar a contingência numa venda, envie `'permitir_contingencia' => false`.
 
+**Autorização com alerta (cStat 120, NT 2026.002)**: a nota está autorizada e não deve ser reemitida; os alertas da SEFAZ (`cMsg`/`xMsg`, até 5) vêm em `$nfce->alertasSefaz`. **Venda em marketplace (NT 2020.006)**: informe o marketplace no payload, `'intermediador' => ['cnpj' => '03007331000141', 'id_cadastro' => 'MINHA-LOJA']`, para a nota sair com `indIntermed=1` e o grupo `infIntermed`; o campo `indicador_presenca` define o `indPres` (padrão: 1 na NFC-e e 2 na NF-e). **DIFAL**: na NF-e interestadual a consumidor final não contribuinte, a API gera o grupo `ICMSUFDest` com a alíquota modal da UF de destino; para outra alíquota interna ou FCP, envie no item `'difal' => ['aliquota_interna_destino' => 19.0, 'fcp_percentual' => 2.0]`.
+
 ---
 
 ### 5. NFS-e Nacional de Serviços

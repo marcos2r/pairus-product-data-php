@@ -48,7 +48,7 @@ abstract class BaseResource
             'Authorization' => "Bearer {$this->config->apiKey}",
             'x-api-key' => $this->config->apiKey,
             'Accept' => 'application/json',
-            'User-Agent' => 'Pairus-PHP-SDK/1.6.0 (PHP/' . PHP_VERSION . ')',
+            'User-Agent' => 'Pairus-PHP-SDK/1.7.0 (PHP/' . PHP_VERSION . ')',
         ] + $extraHeaders;
 
         $body = null;
@@ -117,7 +117,7 @@ abstract class BaseResource
             'Authorization' => "Bearer {$this->config->apiKey}",
             'x-api-key' => $this->config->apiKey,
             'Accept' => '*/*',
-            'User-Agent' => 'Pairus-PHP-SDK/1.6.0 (PHP/' . PHP_VERSION . ')',
+            'User-Agent' => 'Pairus-PHP-SDK/1.7.0 (PHP/' . PHP_VERSION . ')',
         ];
 
         $attempts = 0;

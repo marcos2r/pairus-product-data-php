@@ -1,6 +1,6 @@
 {
   "name": "pairus/product-data",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "SDK oficial da PAIRUS para integração com catálogo GTIN/EAN, predição fiscal (IBS/CBS/IS), saneamento em lote e emissão de NF-e/NFC-e e NFS-e Nacional.",
   "type": "library",
   "license": "MIT",

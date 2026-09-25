@@ -29,7 +29,9 @@ class EmissaoResponse
         public readonly ?string $xmlAutorizadoBase64 = null,
         public readonly ?string $danfePdfBase64 = null,
         public readonly ?string $qrcodeUrl = null,
-        public readonly int $consumoCreditos = 0
+        public readonly int $consumoCreditos = 0,
+        /** @var array<int, array{cMsg: string, xMsg: string}> Alertas da autorização com alerta (cStat 120). */
+        public readonly array $alertasSefaz = []
     ) {}
 
     public static function fromArray(array $data): self
@@ -54,7 +56,8 @@ class EmissaoResponse
             xmlAutorizadoBase64: isset($data['xml_autorizado_base64']) ? (string) $data['xml_autorizado_base64'] : null,
             danfePdfBase64: isset($data['danfe_pdf_base64']) ? (string) $data['danfe_pdf_base64'] : null,
             qrcodeUrl: isset($data['qrcode_url']) ? (string) $data['qrcode_url'] : null,
-            consumoCreditos: (int) ($data['consumo_creditos'] ?? 0)
+            consumoCreditos: (int) ($data['consumo_creditos'] ?? 0),
+            alertasSefaz: is_array($data['alertas_sefaz'] ?? null) ? $data['alertas_sefaz'] : []
         );
     }
 }
