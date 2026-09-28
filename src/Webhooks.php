@@ -12,6 +12,9 @@ use Pairus\Models\WebhookEvent;
  */
 class Webhooks
 {
+    /** Prefixo do formato legado dos eventos de emissão de NF-e/NFC-e/NFS-e. */
+    public const PREFIXO_ASSINATURA = 'sha256=';
+
     /**
      * Calcula a assinatura HMAC-SHA256 esperada para o payload informado.
      */
@@ -24,7 +27,7 @@ class Webhooks
      * Verifica de forma segura (resistente a timing attacks via hash_equals) a assinatura do webhook.
      *
      * @param string|array $payload Corpo bruto da requisição (JSON string) ou array decodificado
-     * @param string|null $signature Valor do cabeçalho 'X-Pairus-Signature'
+     * @param string|null $signature Valor do cabeçalho 'X-Pairus-Signature', com ou sem o prefixo 'sha256='
      * @param string $secret Segredo do webhook (webhook_secret) configurado no painel PAIRUS
      * @return bool True se a assinatura for autêntica e válida
      */
@@ -45,9 +48,15 @@ class Webhooks
             return false;
         }
 
+        // Formato legado dos eventos de emissão (aceito até 27/12/2026): 'sha256=<hex>'
+        $recebida = strtolower(trim($signature));
+        if (str_starts_with($recebida, self::PREFIXO_ASSINATURA)) {
+            $recebida = substr($recebida, strlen(self::PREFIXO_ASSINATURA));
+        }
+
         $expectedSignature = self::computeSignature($payloadStr, $secret);
 
-        return hash_equals(trim($expectedSignature), trim($signature));
+        return hash_equals($expectedSignature, $recebida);
     }
 
     /**

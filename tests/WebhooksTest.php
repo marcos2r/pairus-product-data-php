@@ -54,4 +54,34 @@ class WebhooksTest extends TestCase
 
         Webhooks::constructEvent($this->payload, 'invalid_signature_hex', $this->secret);
     }
+
+    public function testVerifySignatureAceitaPrefixoSha256DoFormatoLegado(): void
+    {
+        $legado = '{"evento":"nfe.autorizada","dados":{"cStat":100}}';
+        $signature = 'sha256=' . Webhooks::computeSignature($legado, $this->secret);
+
+        $this->assertTrue(Webhooks::verifySignature($legado, $signature, $this->secret));
+        $this->assertFalse(Webhooks::verifySignature($legado, 'sha256=' . str_repeat('0', 64), $this->secret));
+    }
+
+    public function testConstructEventNormalizaEnvelopeLegado(): void
+    {
+        $legado = '{"evento":"nfse.autorizada","dados":{"numero_nfse":"202600005001"}}';
+        $signature = 'sha256=' . Webhooks::computeSignature($legado, $this->secret);
+
+        $event = Webhooks::constructEvent($legado, $signature, $this->secret);
+
+        $this->assertSame('nfse.autorizada', $event->event);
+        $this->assertSame('202600005001', $event->data['numero_nfse']);
+    }
+
+    public function testConstructEventConverteTimestampIso8601(): void
+    {
+        $payload = '{"data":{},"event":"pairus.fiscal.update","timestamp":"2026-09-28T10:00:00-03:00"}';
+        $signature = Webhooks::computeSignature($payload, $this->secret);
+
+        $event = Webhooks::constructEvent($payload, $signature, $this->secret);
+
+        $this->assertSame(strtotime('2026-09-28T13:00:00Z'), $event->timestamp);
+    }
 }

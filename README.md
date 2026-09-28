@@ -277,6 +277,8 @@ try {
 }
 ```
 
+> **Dois formatos até 27/12/2026**: os eventos da resposta imediata da emissão (`nfe.*` e `nfse.autorizada`) ainda chegam no formato legado (`{"evento", "dados"}` e `X-Pairus-Signature: sha256=<hex>`); os demais já usam o oficial (`{"event", "timestamp", "data"}` e hexadecimal sem prefixo). A partir da versão 1.9.0, o helper aceita os dois e converte o legado para `event`/`data` (`timestamp` recebe o horário de recebimento; timestamps ISO 8601 passaram a ser convertidos corretamente). Valide sempre o corpo bruto, sem reformatar o JSON.
+
 ---
 
 ## 📋 Tabela de Parâmetros: Obrigatório vs. Opcional
