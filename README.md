@@ -164,10 +164,19 @@ A nota é transmitida automaticamente depois, e o desfecho chega por webhook (`n
 
 ### 5. NFS-e Nacional de Serviços
 
+A DPS (leiaute nacional v1.01) é assinada com o certificado A1 do prestador, cadastrado na Área do Cliente, e transmitida à Sefin Nacional. Hoje a emissão real está disponível em **homologação** (produção restrita); a produção está em implantação.
+
 ```php
 $nota = [
     'ambiente' => 'homologacao',
-    'prestador' => ['cnpj' => '12345678000199', 'inscricao_municipal' => '87654321', 'razao_social' => 'Minha Empresa Ltda'],
+    'prestador' => [
+        'cnpj' => '12345678000199', 'inscricao_municipal' => '87654321', 'razao_social' => 'Minha Empresa Ltda',
+        'percentual_tributos_simples' => 6.0, // alíquota efetiva do Simples (ME/EPP)
+        'endereco' => [ // o município do prestador é o emissor da DPS
+            'logradouro' => 'Av. Paulista', 'numero' => '1578', 'bairro' => 'Bela Vista',
+            'codigo_municipio_ibge' => '3550308', 'uf' => 'SP', 'cep' => '01310200',
+        ],
+    ],
     'tomador' => ['cpf_cnpj' => '98765432000188', 'razao_social' => 'Cliente Ltda'],
     'servico' => [
         'item_lista_servico' => '1.01',
@@ -183,21 +192,25 @@ $nota = [
 // 1. Simulação prévia de tributos (sem custo)
 $simulacao = $pairus->nfse->simular($nota);
 
-// 2. Emissão definitiva
+// 2. Emissão pelo Sistema Nacional
 $nfse = $pairus->nfse->emitir($nota);
-echo "NFS-e Nº: {$nfse->numeroNfse} | Consulta: {$nfse->linkVisualizacao}" . PHP_EOL;
+if (!$nfse->sucesso && $nfse->numeroDps !== null) {
+    // Sem resposta do Sistema Nacional: reenvie com o mesmo número para recuperar a nota sem duplicidade
+    $nfse = $pairus->nfse->emitir($nota + ['numero_dps' => $nfse->numeroDps]);
+}
+echo "NFS-e Nº: {$nfse->numeroNfse} | Chave: {$nfse->chaveAcessoNacional}" . PHP_EOL;
 
-// 3. Consulta de situação
-$status = $pairus->nfse->consultar($nfse->chaveAcessoNacional ?? $nfse->numeroNfse);
+// 3. Consulta; sincronizar confere no Sistema Nacional se a nota foi cancelada fora da plataforma
+$status = $pairus->nfse->consultar($nfse->chaveAcessoNacional, sincronizar: true);
 
-// 4. Cancelamento homologado
+// 4. Cancelamento (evento e101101 no Sistema Nacional; xmlEvento traz o evento registrado)
 $cancel = $pairus->nfse->cancelar([
     'numero_nfse' => $nfse->numeroNfse,
     'chave_acesso_nacional' => $nfse->chaveAcessoNacional,
     'cnpj_prestador' => '12345678000199',
     'inscricao_municipal' => '87654321',
     'codigo_municipio_ibge' => '3550308',
-    'motivo_codigo' => '1', // '1' erro de emissão, '2' serviço não prestado, '3' duplicidade, '9' outros
+    'motivo_codigo' => '1', // '1' erro de emissão, '2' serviço não prestado, '3' duplicidade (enviada como '1'), '9' outros
     'justificativa' => 'Cancelamento solicitado pelo cliente por erro cadastral',
 ]);
 ```
@@ -292,14 +305,26 @@ try {
 | Parâmetro | Tipo | Obrigatório? | Descrição |
 | :--- | :--- | :---: | :--- |
 | `prestador.cnpj` | string | **Sim** | CNPJ do emissor prestador de serviços. |
+| `prestador.inscricao_municipal` | string | **Sim** | Inscrição municipal do prestador. |
+| `prestador.razao_social` | string | **Sim** | Razão social do prestador. |
+| `prestador.endereco` | array | **Sim** | Endereço do prestador; o município dele é o emissor da DPS (Rejeição E0037). |
+| `prestador.percentual_tributos_simples` | float | Condicional | Alíquota efetiva do Simples (pTotTribSN), exigida do ME/EPP (Rejeição E0712). |
+| `prestador.situacao_simples_nacional` | string | Não | '1' não optante, '2' MEI, '3' ME/EPP (derivado se omitido). |
+| `prestador.regime_apuracao_simples` | string | Não | Só ME/EPP: '1' tudo pelo SN, '2' ISSQN fora, '3' federais e ISSQN fora. |
 | `tomador.cpf_cnpj` | string | **Sim** | CPF ou CNPJ do tomador do serviço. |
 | `tomador.razao_social` | string | **Sim** | Razão social ou nome completo do tomador. |
 | `servico.discriminacao` | string | **Sim** | Descrição clara dos serviços prestados. |
 | `servico.valor_servicos` | float | **Sim** | Valor bruto total dos serviços (R$). |
-| `servico.item_lista_servico` | string | Não | Item da LC 116/2003 (ex: '01.01'). |
-| `servico.codigo_tributacao_municipio` | string | Não | Código municipal de tributação da prefeitura. |
+| `servico.item_lista_servico` | string | **Sim** | Item da LC 116/2003 (ex: '1.07'). |
+| `servico.municipio_prestacao_ibge` | string | **Sim** | Código IBGE do local da prestação (7 dígitos). |
+| `servico.codigo_tributacao_nacional` | string | Não | cTribNac de 6 dígitos; se omitido, vem do item pela lista nacional. |
+| `servico.codigo_tributacao_municipio` | string | Não | Código de tributação municipal (cTribMun, 3 dígitos). |
+| `servico.codigo_nbs` | string | Não | Código NBS de 9 dígitos. |
+| `servico.tipo_imunidade` | string | Condicional | '0' a '5', obrigatório com exigibilidade '5' (imunidade). |
 | `servico.aliquota_iss` | float | Não | Alíquota nominal do ISS (ex: 2.0 para 2%). |
 | `servico.iss_retido` | bool | Não | True se o ISS for retido na fonte pelo tomador. |
+| `ambiente` | string | Não | 'homologacao' (emissão real na produção restrita) ou 'producao' (em implantação). |
+| `numero_dps` | int | Não | Omitido, a API reserva o próximo; informe o devolvido na resposta para reenviar após falta de resposta. |
 
 ---
 

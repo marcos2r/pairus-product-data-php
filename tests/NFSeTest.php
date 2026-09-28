@@ -165,4 +165,33 @@ class NFSeTest extends TestCase
         $this->assertTrue($res->sucesso);
         $this->assertSame('autorizada', $res->status);
     }
+
+    public function testConsultarNFSeSincronizandoComOSistemaNacional(): void
+    {
+        $chave = str_repeat('5', 50);
+        $mockHttp = $this->createMock(HttpClientInterface::class);
+        $mockHttp->expects($this->once())
+            ->method('request')
+            ->with('GET', "https://api.pairus.com.br/v1/nfse/{$chave}?sincronizar=true", $this->anything(), null, 30.0)
+            ->willReturn(new Response(
+                statusCode: 200,
+                headers: ['Content-Type' => 'application/json'],
+                body: json_encode(['sucesso' => true, 'status' => 'cancelada'])
+            ));
+
+        $client = new PairusClient(apiKey: 'pairus_test_key', httpClient: $mockHttp);
+        $this->assertSame('cancelada', $client->nfse->consultar($chave, sincronizar: true)->status);
+    }
+
+    public function testCamposDoSistemaNacionalNasRespostas(): void
+    {
+        $nfse = NFSeResponse::fromArray(['sucesso' => false, 'status' => 'rejeitada', 'numero_dps' => 12,
+                                         'id_dps' => 'DPS' . str_repeat('0', 42)]);
+        $this->assertSame(12, $nfse->numeroDps);
+        $this->assertSame(45, strlen($nfse->idDps));
+
+        $cancelamento = CancelamentoNFSeResponse::fromArray(['sucesso' => true, 'numero_nfse' => '1',
+                                                             'xml_evento' => '<evento/>']);
+        $this->assertSame('<evento/>', $cancelamento->xmlEvento);
+    }
 }

@@ -39,10 +39,14 @@ class NFSeResource extends BaseResource
     }
 
     /**
-     * Cancela uma NFS-e autorizada perante a autoridade fiscal.
+     * Cancela a NFS-e registrando o evento e101101 no Sistema Nacional da NFS-e.
      *
-     * @param array $payload Array com 'chave_acesso' ou 'numero_nfse' e 'codigo_cancelamento' / 'motivo'
-     * @return CancelamentoNFSeResponse
+     * Sem resposta, repita o pedido: um cancelamento já registrado é confirmado, sem duplicar.
+     *
+     * @param array $payload 'numero_nfse', 'cnpj_prestador', 'inscricao_municipal', 'codigo_municipio_ibge',
+     *                       'justificativa' (15 a 255 caracteres), 'chave_acesso_nacional' e 'motivo_codigo'
+     *                       ('1' erro de emissão, '2' serviço não prestado, '3' duplicidade, '9' outros)
+     * @return CancelamentoNFSeResponse Resultado, data e XML do evento (xmlEvento)
      */
     public function cancelar(array $payload): CancelamentoNFSeResponse
     {
@@ -55,12 +59,13 @@ class NFSeResource extends BaseResource
      * Consulta a situação de uma NFS-e pelo número ou chave de acesso.
      *
      * @param string $chaveOuNumero Chave de acesso de 50 dígitos ou número do DPS/NFS-e
+     * @param bool $sincronizar Confere no Sistema Nacional se a nota foi cancelada fora da plataforma
      * @return NFSeResponse
      */
-    public function consultar(string $chaveOuNumero): NFSeResponse
+    public function consultar(string $chaveOuNumero, bool $sincronizar = false): NFSeResponse
     {
         $chaveLimpa = rawurlencode(trim($chaveOuNumero));
-        $data = $this->request('GET', "/v1/nfse/{$chaveLimpa}");
+        $data = $this->request('GET', "/v1/nfse/{$chaveLimpa}", queryParams: $sincronizar ? ['sincronizar' => 'true'] : []);
 
         return NFSeResponse::fromArray($data);
     }

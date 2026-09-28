@@ -30,7 +30,11 @@ class NFSeResponse
         public readonly int $creditosCobrados = 0,
         public readonly float $tempoProcessamentoMs = 0.0,
         public readonly array $raw = [],
-        public readonly ?string $danfseBase64 = null
+        public readonly ?string $danfseBase64 = null,
+        /** Número da DPS: sem resposta do Sistema Nacional, reenvie com ele e a mesma série. */
+        public readonly ?int $numeroDps = null,
+        /** Identificador nacional da DPS (45 posições). */
+        public readonly ?string $idDps = null
     ) {}
 
     public static function fromArray(array $data): self
@@ -58,7 +62,9 @@ class NFSeResponse
             creditosCobrados: (int) ($data['creditos_cobrados'] ?? 0),
             tempoProcessamentoMs: (float) ($data['tempo_processamento_ms'] ?? 0.0),
             raw: $data,
-            danfseBase64: isset($data['danfse_base64']) ? (string) $data['danfse_base64'] : null
+            danfseBase64: isset($data['danfse_base64']) ? (string) $data['danfse_base64'] : null,
+            numeroDps: isset($data['numero_dps']) ? (int) $data['numero_dps'] : null,
+            idDps: isset($data['id_dps']) ? (string) $data['id_dps'] : null
         );
     }
 }
