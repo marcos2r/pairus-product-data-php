@@ -24,7 +24,9 @@ class IBSCBSData
         public readonly float $aliquotaEfetivaUnificada = 0.0,
         public readonly float $ibsReducaoAliquotaEstadual = 0.0,
         public readonly float $ibsReducaoAliquotaMunicipal = 0.0,
-        public readonly bool $vTotDFeObrigatorio = false
+        public readonly bool $vTotDFeObrigatorio = false,
+        public readonly float $ibsAliquotaEfetivaEstadual = 0.0,
+        public readonly float $ibsAliquotaEfetivaMunicipal = 0.0
     ) {}
 
     public static function fromArray(array $data): self
@@ -44,7 +46,9 @@ class IBSCBSData
             aliquotaEfetivaUnificada: (float) ($data['aliquota_efetiva_unificada'] ?? 0.0),
             ibsReducaoAliquotaEstadual: (float) ($data['ibs_reducao_aliquota_estadual'] ?? 0.0),
             ibsReducaoAliquotaMunicipal: (float) ($data['ibs_reducao_aliquota_municipal'] ?? 0.0),
-            vTotDFeObrigatorio: (bool) ($data['vTotDFe_obrigatorio'] ?? false)
+            vTotDFeObrigatorio: (bool) ($data['vTotDFe_obrigatorio'] ?? false),
+            ibsAliquotaEfetivaEstadual: (float) ($data['ibs_aliquota_efetiva_estadual'] ?? 0.0),
+            ibsAliquotaEfetivaMunicipal: (float) ($data['ibs_aliquota_efetiva_municipal'] ?? 0.0)
         );
     }
 }
