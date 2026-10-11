@@ -93,4 +93,39 @@ class DFeResource extends BaseResource
     {
         return $this->requestRaw('GET', "/v1/dfe/danfe/{$chaveAcesso}");
     }
+
+    /**
+     * Consulta se há Certificado Digital A1 ativo para o CNPJ e quando ele vence.
+     *
+     * @param string $cnpj CNPJ do estabelecimento (com ou sem máscara)
+     * @return array 'status' => 'ativo' (com 'data_vencimento' e 'dias_restantes') ou 'nao_configurado'
+     */
+    public function consultarCertificado(string $cnpj): array
+    {
+        return $this->request('GET', '/v1/dfe/certificado', queryParams: [
+            'cnpj' => $cnpj,
+        ]);
+    }
+
+    /**
+     * Instala ou atualiza o Certificado Digital A1 da conta, usado na DF-e e na emissão de NF-e.
+     *
+     * @param string $alias Apelido da empresa (2 a 120 caracteres)
+     * @param string $pfxBase64 Conteúdo do arquivo .pfx codificado em Base64
+     * @param string $senha Senha do certificado (só trafega na requisição; não é devolvida)
+     * @return array Metadados do certificado validado e instalado (chave 'certificado')
+     * @throws \InvalidArgumentException Quando o apelido tem menos de 2 caracteres
+     */
+    public function enviarCertificado(string $alias, string $pfxBase64, string $senha): array
+    {
+        if (mb_strlen(trim($alias)) < 2) {
+            throw new \InvalidArgumentException('O apelido (alias) do certificado deve ter ao menos 2 caracteres.');
+        }
+
+        return $this->request('POST', '/v1/dfe/certificado', jsonData: [
+            'alias' => $alias,
+            'pfx_base64' => $pfxBase64,
+            'senha' => $senha,
+        ]);
+    }
 }

@@ -219,6 +219,16 @@ $cancel = $pairus->nfse->cancelar([
 
 ### 6. DF-e Inbound & Captura Ativa SEFAZ (Gestão de Compras)
 
+A captura e a emissão usam o Certificado Digital A1 da conta. Instale ou renove direto pelo SDK e confira o vencimento:
+
+```php
+$instalado = $pairus->dfe->enviarCertificado('Matriz', base64_encode(file_get_contents('certificado.pfx')), getenv('SENHA_PFX'));
+$status = $pairus->dfe->consultarCertificado('12345678000195');
+if ($status['status'] === 'ativo') {
+    echo "Vence em {$status['dias_restantes']} dias";
+}
+```
+
 Capture ativamente as notas fiscais emitidas por fornecedores contra o CNPJ da sua empresa via WebService `NFeDistribuicaoDFe` da SEFAZ Nacional:
 
 ```php

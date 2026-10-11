@@ -158,4 +158,57 @@ class DFeTest extends TestCase
         $pdf = $client->dfe->baixarDanfe('35260911222333000181550010000015411000015418');
         $this->assertSame($mockPdf, $pdf);
     }
+
+    public function testConsultarCertificado(): void
+    {
+        $mockHttp = $this->createMock(HttpClientInterface::class);
+        $mockHttp->expects($this->once())
+            ->method('request')
+            ->with(
+                'GET',
+                $this->stringContains('/v1/dfe/certificado')
+            )
+            ->willReturn(new Response(
+                statusCode: 200,
+                headers: ['Content-Type' => 'application/json'],
+                body: json_encode(['status' => 'ativo', 'cnpj' => '11222333000181', 'dias_restantes' => 120])
+            ));
+
+        $client = new PairusClient(apiKey: 'pk_test_123', httpClient: $mockHttp);
+        $res = $client->dfe->consultarCertificado('11222333000181');
+
+        $this->assertSame('ativo', $res['status']);
+        $this->assertSame(120, $res['dias_restantes']);
+    }
+
+    public function testEnviarCertificado(): void
+    {
+        $mockHttp = $this->createMock(HttpClientInterface::class);
+        $mockHttp->expects($this->once())
+            ->method('request')
+            ->with(
+                'POST',
+                $this->stringContains('/v1/dfe/certificado'),
+                $this->anything(),
+                $this->stringContains('TUlJLi4u')
+            )
+            ->willReturn(new Response(
+                statusCode: 200,
+                headers: ['Content-Type' => 'application/json'],
+                body: json_encode(['status' => 'success', 'message' => 'ok', 'certificado' => ['certificado_id' => 'cert_1']])
+            ));
+
+        $client = new PairusClient(apiKey: 'pk_test_123', httpClient: $mockHttp);
+        $res = $client->dfe->enviarCertificado('Matriz', 'TUlJLi4u', 'segredo');
+
+        $this->assertSame('cert_1', $res['certificado']['certificado_id']);
+    }
+
+    public function testEnviarCertificadoRecusaApelidoCurto(): void
+    {
+        $client = new PairusClient(apiKey: 'pk_test_123', httpClient: $this->createMock(HttpClientInterface::class));
+
+        $this->expectException(\InvalidArgumentException::class);
+        $client->dfe->enviarCertificado('M', 'x', 's');
+    }
 }
