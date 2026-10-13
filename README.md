@@ -217,6 +217,19 @@ $cancel = $pairus->nfse->cancelar([
 
 ---
 
+### Consulta da Nota Emitida, Referência da Venda e CSC da NFC-e
+Informe `referencia_externa` na emissão. Ela volta na resposta (`$res->referenciaExterna`) e em todo webhook, junto com `cnpj_emitente`:
+```php
+$notas = $pairus->emissao->buscarPorReferencia('12345678000195', 'pedido-8841'); // [] = seguro emitir
+$nota = $pairus->emissao->consultar($notas[0]['chave_acesso'], incluirXml: true);
+$pdf = $pairus->emissao->baixarDanfe($nota['chave_acesso']);
+
+$csc = $pairus->empresas->configurarCsc('12345678000195', 'producao', '000001', 'SEU_CSC_DA_SEFAZ');
+var_dump($csc['producao']['configurado']); // o código nunca é devolvido
+```
+
+---
+
 ### 6. DF-e Inbound & Captura Ativa SEFAZ (Gestão de Compras)
 
 A captura e a emissão usam o Certificado Digital A1 da conta. Instale ou renove direto pelo SDK e confira o vencimento:

@@ -142,6 +142,47 @@ class EmissaoResource extends BaseResource
     }
 
     /**
+     * Consulta a situação atual de uma NF-e ou NFC-e emitida pela sua conta.
+     *
+     * @param string $chaveAcesso Chave de 44 dígitos da nota
+     * @param bool $incluirXml Inclui o XML autorizado (procNFe) em Base64
+     * @return array Situação ('status_sefaz', 'protocolo', 'referencia_externa'...) e, se pedido, 'xml_autorizado_base64'
+     */
+    public function consultar(string $chaveAcesso, bool $incluirXml = false): array
+    {
+        return $this->request('GET', "/v1/nfe/{$chaveAcesso}", queryParams: [
+            'incluir_xml' => $incluirXml ? 'true' : 'false',
+        ]);
+    }
+
+    /**
+     * Localiza as notas emitidas para uma venda pela 'referencia_externa' informada na emissão.
+     * Lista vazia: nenhuma nota gravada para a venda, é seguro emitir.
+     *
+     * @param string $cnpjEmitente CNPJ do emitente
+     * @param string $referenciaExterna Identificador da venda no seu sistema
+     * @return array Lista de notas, das mais recentes às mais antigas
+     */
+    public function buscarPorReferencia(string $cnpjEmitente, string $referenciaExterna): array
+    {
+        return $this->request('GET', '/v1/nfe', queryParams: [
+            'cnpj_emitente' => $cnpjEmitente,
+            'referencia_externa' => $referenciaExterna,
+        ]);
+    }
+
+    /**
+     * Baixa o DANFE em PDF de uma nota emitida (na contingência ainda não transmitida, com a tarja).
+     *
+     * @param string $chaveAcesso Chave de 44 dígitos da nota
+     * @return string Conteúdo binário bruto do PDF
+     */
+    public function baixarDanfe(string $chaveAcesso): string
+    {
+        return $this->requestRaw('GET', "/v1/nfe/{$chaveAcesso}/danfe");
+    }
+
+    /**
      * Cabeçalho Idempotency-Key da emissão: a chave informada ou um UUID v4 gerado por chamada.
      *
      * @return array<string, string>

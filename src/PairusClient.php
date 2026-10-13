@@ -7,6 +7,7 @@ namespace Pairus;
 use Pairus\Http\CurlHttpClient;
 use Pairus\Http\HttpClientInterface;
 use Pairus\Resources\DFeResource;
+use Pairus\Resources\EmpresasResource;
 use Pairus\Resources\EmissaoResource;
 use Pairus\Resources\FiscalResource;
 use Pairus\Resources\NFSeResource;
@@ -23,6 +24,7 @@ class PairusClient
     public readonly EmissaoResource $emissao;
     public readonly NFSeResource $nfse;
     public readonly DFeResource $dfe;
+    public readonly EmpresasResource $empresas;
 
     /**
      * Instancia o cliente da PAIRUS.
@@ -54,6 +56,7 @@ class PairusClient
         $this->emissao = new EmissaoResource($this->config, $client);
         $this->nfse = new NFSeResource($this->config, $client);
         $this->dfe = new DFeResource($this->config, $client);
+        $this->empresas = new EmpresasResource($this->config, $client);
     }
 
     /**
